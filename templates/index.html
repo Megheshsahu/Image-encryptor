@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Encryptor</title>
+    <style>
+        body {
+            background-color: rgb(68, 2, 118);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        h1 {
+            color: white;
+            margin-bottom: 20px; /* Added margin-bottom to space out the header */
+        }
+
+        .button-container {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            justify-content: center;
+            flex-direction: row; /* Updated to horizontal direction */
+        }
+
+        .button {
+            padding: 20px 40px;
+            border-radius: 5px;
+            border: 2px solid green;
+            background-color: green;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+            margin-right: 10px; /* Added margin-right to separate buttons */
+        }
+
+        .button:last-child {
+            margin-right: 0; /* Remove margin-right for the last button */
+        }
+
+        .button:hover {
+            border-color: black;
+            opacity: 0.8;
+        }
+
+        .file-support-info {
+            color: white;
+            font-size: 12px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <h1>Image Encryptor</h1>
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        <ul style="color: yellow;">
+        {% for message in messages %}
+          <li>{{ message }}</li>
+        {% endfor %}
+        </ul>
+      {% endif %}
+    {% endwith %}
+
+    <form method="post" enctype="multipart/form-data">
+        <div style="margin-bottom: 10px;">
+            <input type="file" name="file" accept="image/png" required />
+        </div>
+        <div style="margin-bottom: 10px;">
+            <input type="text" name="key" placeholder="Enter encryption key" required />
+        </div>
+        <div class="button-container">
+            <button type="submit" name="action" value="encrypt" class="button">Encrypt</button>
+            <button type="submit" name="action" value="decrypt" class="button">Decrypt</button>
+        </div>
+    </form>
+</body>
+</html>

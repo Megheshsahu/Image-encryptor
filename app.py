@@ -1,31 +1,51 @@
-from flask import Flask, render_template, jsonify, request
-import subprocess
+
+from flask import Flask, render_template, request, send_file, redirect, url_for, flash
+import os
+from werkzeug.utils import secure_filename
+from io import BytesIO
 
 app = Flask(__name__)
 
-@app.route('/')
+app.config['SECRET_KEY'] = 'your_secret_key'
+app.config['UPLOAD_FOLDER'] = 'uploads'
+os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+
+
+@app.route('/', methods=['GET', 'POST'])
 def index():
+    if request.method == 'POST':
+        action = request.form.get('action')
+        key = request.form.get('key')
+        file = request.files.get('file')
+        if not file or not key:
+            flash('Please provide both an image file and a key.')
+            return redirect(url_for('index'))
+        filename = secure_filename(file.filename)
+        file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        file.save(file_path)
+        output_bytes = None
+        try:
+            with open(file_path, 'rb') as f:
+                data = bytearray(f.read())
+            key_bytes = key.encode('utf-8')
+            processed = bytes(
+                b ^ key_bytes[i % len(key_bytes)] for i, b in enumerate(data)
+            )
+            output_bytes = BytesIO(processed)
+            output_bytes.seek(0)
+        except Exception as e:
+            flash(f'Error: {e}')
+            return redirect(url_for('index'))
+        out_name = f"{'encrypted' if action == 'encrypt' else 'decrypted'}_{filename}"
+        return send_file(output_bytes, as_attachment=True, download_name=out_name)
     return render_template('index.html')
 
-@app.route('/run_python_code', methods=['POST'])
-def run_python_code():
-    try:
-        button_number = request.json.get('buttonNumber')
-        
-        # Modify this part based on the action you want for each button
-        if button_number == 1:
-            result = subprocess.check_output(['python', 'hello_world.py'], text=True)
-        elif button_number == 2:
-            result = subprocess.check_output(['python', 'decryption.py'], text=True)
-        else:
-            return jsonify({'error': 'Invalid button number'})
 
-        return jsonify({'result': result.strip()})
-    except subprocess.CalledProcessError as e:
-        return jsonify({'error': f'Error: {e.output.decode("utf-8").strip()}'})
-
+# Run the app on Railway's expected host/port
 if __name__ == '__main__':
-    app.run(debug=True)
+    import os
+    port = int(os.environ.get('PORT', 8000))
+    app.run(host='0.0.0.0', port=port)
 
 
 
