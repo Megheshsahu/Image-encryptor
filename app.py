@@ -21,6 +21,10 @@ def index():
             flash('Please provide both an image file and a key.')
             return redirect(url_for('index'))
         filename = secure_filename(file.filename)
+        # Backend check for PNG file type
+        if not filename.lower().endswith('.png') or file.mimetype != 'image/png':
+            flash('Only PNG files are allowed.')
+            return redirect(url_for('index'))
         file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
         file.save(file_path)
         output_bytes = None
@@ -35,14 +39,23 @@ def index():
             output_bytes.seek(0)
         except Exception as e:
             flash(f'Error: {e}')
+            if os.path.exists(file_path):
+                os.remove(file_path)
             return redirect(url_for('index'))
+        if os.path.exists(file_path):
+            os.remove(file_path)
         out_name = f"{'encrypted' if action == 'encrypt' else 'decrypted'}_{filename}"
         return send_file(output_bytes, as_attachment=True, download_name=out_name)
     return render_template('index.html')
 
 
 
-# No need for __main__ block; Gunicorn will serve the app object directly
+
+# Allow running with 'python app.py' for simple deployment
+if __name__ == '__main__':
+    import os
+    port = int(os.environ.get('PORT', 8000))
+    app.run(host='0.0.0.0', port=port)
 
 
 
